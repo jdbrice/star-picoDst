@@ -9,45 +9,76 @@
 #include "StPicoDstMaker/StPicoDst.h"
 #include "StPicoEvent/StPicoEpdTile.h"
 
+#include "StEpdDbMaker/StEpdDbMaker.h"
+
+#include "StChain.h"
+#include "StChain/StMaker.h"
+
 
 
 StPicoEpdFiller::StPicoEpdFiller(StPicoDst& picoDst, int year) :
   mPicoDst(picoDst)
 {
-  if (year == 2017)  setDefaultMapping_30may2017();
+  //  if (year == 2017)  setDefaultMapping_30may2017();
+  /* no-op */
 }
 
 
-void StPicoEpdFiller::fill(const StMuDst& muDst)
+void StPicoEpdFiller::fill(const StMuDst& muDst, StEpdDbMaker* epdDbMaker)
 {
   TClonesArray *mTileCollection = mPicoDst.picoArray(StPicoArrays::EpdTile);
 
   StMuEvent *Event = muDst.event();
   StTriggerData *trg = const_cast<StTriggerData *>(Event->triggerData());
 
+  // only works if you're a maker -->  StEpdDbMaker* epdDbMaker = static_cast<StEpdDbMaker*>(GetMaker("epdDb"));
+
+
+
   int nTiles = 0;
 
   // Loop over EPD tiles
   // here, the "ADC","TDC" and"TAC" can be a little subtle...
+  int PrePost = 0;
   for (int positionId = 4; positionId <= 6; positionId++)
   {
     for (int tileId = 1; tileId <= 31; tileId++)
     {
-      EpdAnalysisMap& epdMap = mEpdMap[0][positionId-1][tileId-1];
 
-      int ADC = trg->fmsADC(5, epdMap.qt_board_address, epdMap.qt_channel_ADC, 0);
-      int TDC = trg->fmsTDC(5, epdMap.qt_board_address, epdMap.qt_channel_ADC, 0);
+      int ADC = trg->fmsADC(epdDbMaker->GetCrateAdc(0,positionId,tileId),
+			    epdDbMaker->GetBoardAdc(0,positionId,tileId),
+			    epdDbMaker->GetChannelAdc(0,positionId,tileId),
+			    PrePost);
+      int TDC = trg->fmsTDC(epdDbMaker->GetCrateAdc(0,positionId,tileId),
+			    epdDbMaker->GetBoardAdc(0,positionId,tileId),
+			    epdDbMaker->GetChannelAdc(0,positionId,tileId),
+			    PrePost);
 
-      bool hasTAC = (epdMap.qt_channel_TAC > 0);
+      bool hasTAC = (epdDbMaker->GetChannelTac(0,positionId,tileId)>=0);
 
-      int TAC = hasTAC ? trg->fmsADC(5, epdMap.qt_board_address, epdMap.qt_channel_TAC, 0) : 0;
+      int TAC = (hasTAC) ?
+	trg->fmsADC(epdDbMaker->GetCrateTac(0,positionId,tileId),
+		    epdDbMaker->GetBoardTac(0,positionId,tileId),
+		    epdDbMaker->GetChannelTac(0,positionId,tileId),
+		    PrePost)
+	:
+	0;
+
+      float nMIP = (ADC + epdDbMaker->GetOffset(0,positionId,tileId)) / epdDbMaker->GetMip(0,positionId,tileId);
+
 
       DetectorSide EW = DetectorSide::East; // always East for 2017
-      new((*mTileCollection)[nTiles++]) StPicoEpdTile(positionId, tileId, EW, ADC, TAC, TDC, hasTAC);
+      new((*mTileCollection)[nTiles++]) StPicoEpdTile(positionId, tileId, EW, ADC, TAC, TDC, hasTAC, nMIP);
     }
   }
 }
 
+
+/*
+  14 Oct 2017 - mal
+  finally we have the database implemented, so we don't need this hard-coded electronics
+  map below.  Just for safety, I comment it out for now, rather than delete it.  But
+  assuming all goes well, we delete at the next edit.
 
 void StPicoEpdFiller::setDefaultMapping_30may2017()
 {
@@ -800,3 +831,4 @@ void StPicoEpdFiller::setDefaultMapping_30may2017()
   mEpdMap[1][11][29].qt_board_address = -999;  mEpdMap[1][11][29].qt_channel_ADC = -1000;  mEpdMap[1][11][29].qt_channel_TAC = -1000;
   mEpdMap[1][11][30].qt_board_address = -999;  mEpdMap[1][11][30].qt_channel_ADC = -1000;  mEpdMap[1][11][30].qt_channel_TAC = -1000;
 }
+*/

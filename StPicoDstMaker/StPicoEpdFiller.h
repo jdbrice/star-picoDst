@@ -3,12 +3,16 @@
 
 class StMuDst;
 class StPicoDst;
+class StEpdDbMaker;
 
 
 /**
- * This class fills a TClonesArray of StPicoEpdTile objects that make up the BBC
- * detector. The tile objects for the BBC and EPD detectors are the same, hence
- * the name.
+ * This class fills a TClonesArray of StPicoEpdTile objects that make up the EPD
+ * detector.
+ *
+ * update 14 Oct 2017 - mal
+ * 1) removing hard-coded mapping, in favor of DB
+ * 2) calculating and storing single-float calibrated data in StPicoEpdTile
  */
 class StPicoEpdFiller
 {
@@ -16,7 +20,7 @@ public:
 
   StPicoEpdFiller(StPicoDst& picoDst, int year = 2017);
 
-  void fill(const StMuDst& muDst);
+  void fill(const StMuDst& muDst, StEpdDbMaker* db);
 
 private:
 

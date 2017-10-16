@@ -44,6 +44,7 @@
 #include "StEmcRawMaker/StBemcTables.h"
 
 #include "StFmsDbMaker/StFmsDbMaker.h"
+#include "StEpdDbMaker/StEpdDbMaker.h"  // mal 14 oct 2017
 
 #include "tables/St_mtdModuleToQTmap_Table.h"
 #include "tables/St_mtdQTSlewingCorr_Table.h"
@@ -626,7 +627,8 @@ Int_t StPicoDstMaker::MakeWrite()
   fillBTofHits();
   fillMtdHits();
   mBbcFiller.fill(*mMuDst);
-  mEpdFiller.fill(*mMuDst);
+  StEpdDbMaker* epdDbMaker = static_cast<StEpdDbMaker*>(GetMaker("epdDb"));
+  mEpdFiller.fill(*mMuDst,epdDbMaker);
 
   // Could be a good idea to move this call to Init() or InitRun()
   StFmsDbMaker* fmsDbMaker = static_cast<StFmsDbMaker*>(GetMaker("fmsDb"));

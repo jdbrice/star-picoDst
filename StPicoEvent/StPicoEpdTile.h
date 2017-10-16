@@ -19,13 +19,18 @@ using namespace StarPicoDst;
  * in 2017, we will save all EPD tiles.  After 2017, we will not.
  *
  * - Mike Lisa 20 May 2017
+ *
+ * Update 14 Oct 2017: now include *calibrated* nMIP information - one float
+ *
  */
 class StPicoEpdTile : public TObject
 {
 public:
 
   StPicoEpdTile();
-  StPicoEpdTile(int positionId, int tileId, DetectorSide EW, int ADC, int TAC, int TDC, bool hasTAC, bool statusIsGood = true);
+  StPicoEpdTile(int positionId, int tileId, DetectorSide EW, 
+		int ADC, int TAC, int TDC, bool hasTAC, 
+		float nMIP, bool statusIsGood = true);
 
   virtual void Print(const Char_t *option = "") const;
 
@@ -33,6 +38,7 @@ public:
   int  adc() const;
   int  tac() const;
   int  tdc() const;
+  float nMIP() const;
   DetectorSide side() const;
 
   int id() const;
@@ -54,12 +60,15 @@ protected:
   ///                      bit 30 is the good/bad (1/0) status flag
   ULong_t mQTdata;
 
+  Float_t mnMIP;  // calibrated signal
+
   ClassDef(StPicoEpdTile, 1)
 };
 
 inline DetectorSide StPicoEpdTile::side() const { return mId < 0 ? DetectorSide::East : DetectorSide::West;}
 
 inline int  StPicoEpdTile::id() const { return mId; }
+inline float StPicoEpdTile::nMIP() const { return mnMIP; }
 inline int  StPicoEpdTile::position() const { return std::abs(mId / 100); }
 inline int  StPicoEpdTile::tile() const { return std::abs(mId % 100); }
 
